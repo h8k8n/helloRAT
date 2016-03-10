@@ -1,38 +1,52 @@
-#!/usr/bin/python           # This is server.py file
 import socket
 import sys
-
-# Create a TCP/IP socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Bind the socket to the port
-server_address = ('10.0.0.211', 10000)
-print (sys.stderr, 'starting up on %s port %s' % server_address)
-sock.bind(server_address)
-
-# Listen for incoming connections
-sock.listen(1)
-
-while True:
-    # Wait for a connection
-    print (sys.stderr, 'waiting for a connection')
-    print(sock)
-    connection, client_address = sock.accept()
-    #if(client_address=)
-    try:
-        print (sys.stderr, 'connection from', client_address)
-
-        # Receive the data in small chunks and retransmit it
-        while True:
-            data = connection.recv(16)
-            print (sys.stderr, 'received "%s"' % data)
-            if data:
-                print (sys.stderr, 'sending data back to the client')
-                connection.sendall(data)
-            else:
-                print (sys.stderr, 'no more data from', client_address)
-                break
-            
-    finally:
-        # Clean up the connection
-        connection.close()
+from _thread import *
+ 
+HOST = '10.3.39.158'   # Symbolic name meaning all available interfaces
+PORT = 8888 # Arbitrary non-privileged port
+ 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+print ('Socket created')
+ 
+#Bind socket to local host and port
+try:
+    s.bind((HOST, PORT))
+except socket.error as msg:
+    print ('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
+    sys.exit()
+     
+print ('Socket bind complete')
+ 
+#Start listening on socket
+s.listen(10)
+print ('Socket now listening')
+ 
+#Function for handling connections. This will be used to create threads
+def clientthread(conn):
+    #Sending message to connected client
+    conn.send(str.encode('Welcome to the server. Type something and hit enter\n')) #send only takes string
+     
+    #infinite loop so that function do not terminate and thread do not end.
+    while True:
+         
+        #Receiving from client
+        data = conn.recv(1024)
+        reply = data
+        if not data: 
+            break
+        print(data)
+        conn.sendall(reply)
+     
+    #came out of loop
+    conn.close()
+ 
+#now keep talking with the client
+while 1:
+    #wait to accept a connection - blocking call
+    conn, addr = s.accept()
+    print ('Connected with ' + addr[0] + ':' + str(addr[1]))
+     
+    #start new thread takes 1st argument as a function name to be run, second is the tuple of arguments to the function.
+    start_new_thread(clientthread ,(conn,))
+ 
+s.close()
